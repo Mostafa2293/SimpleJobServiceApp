@@ -104,7 +104,7 @@ public class ExampleJobService extends JobService {
                 double latitude = location.getLatitude();
                 double longitude = location.getLongitude();
 
-                String locationString = "" + latitude + "///" + longitude;
+                String locationString = "Latitude: " + latitude + " /// " + "Longitude: " +longitude;
 
                 writeData(locationString, getApplicationContext());
 
@@ -164,8 +164,8 @@ public class ExampleJobService extends JobService {
 
     private void writeData(String data, Context context) {
         try {
-            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(new FileOutputStream(path));
-            outputStreamWriter.append(data);
+            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(new FileOutputStream(path,true));
+            outputStreamWriter.append("\n "+data);
             outputStreamWriter.close();
 
         } catch (IOException e) {
