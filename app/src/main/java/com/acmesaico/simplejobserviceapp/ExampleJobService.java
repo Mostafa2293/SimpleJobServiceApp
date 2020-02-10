@@ -35,12 +35,20 @@ public class ExampleJobService extends JobService {
     private boolean jobCancelled = false;
     private LocationManager locationManager;
     private LocationListener locationListener;
-    String path = Environment.getExternalStorageDirectory().getAbsolutePath()+ File.separator+"locations.txt";
+    String path = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "locations.txt";
+    String readPath = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "gpsinterval.txt";
+    int interval;
 
     @Override
     public boolean onStartJob(JobParameters params) {
         Log.d(TAG, "Job started");
         createFile();
+        createReadFile();
+        if (readData(getApplicationContext()).isEmpty()) {
+            interval = 2000;
+        } else {
+            interval = Integer.parseInt(readData(getApplicationContext()));
+        }
         doBackgroundWork(params);
         return true;
     }
@@ -53,32 +61,33 @@ public class ExampleJobService extends JobService {
 //                Handler mHandler = new Handler(Looper.getMainLooper()) {
 //                    @Override
 //                    public void handleMessage(Message message) {
-                        getLocation();
+        getLocation();
 //                    }
 //                };
-                if (jobCancelled) {
-                    return;
-                }
+        if (jobCancelled) {
+            return;
+        }
 
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
 
-                Log.d(TAG, "Job finished");
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    jobFinished(params, false);
-                }
-            }
-      /*  }).start();
+        Log.d(TAG, "Job finished");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            jobFinished(params, false);
+        }
     }
+
+    /*  }).start();
+  }
 */
     @Override
     public boolean onStopJob(JobParameters params) {
         Log.d(TAG, "Job cancelled before completion");
-        if(locationManager != null){
+        if (locationManager != null) {
             locationManager.removeUpdates(locationListener);
         }
         jobCancelled = true;
@@ -95,9 +104,9 @@ public class ExampleJobService extends JobService {
                 double latitude = location.getLatitude();
                 double longitude = location.getLongitude();
 
-                String locationString = "" +latitude + "///" + longitude;
+                String locationString = "" + latitude + "///" + longitude;
 
-                writeData(locationString,getApplicationContext());
+                writeData(locationString, getApplicationContext());
 
                 Log.d(TAG, "" + latitude + " /// " + longitude);
 
@@ -120,34 +129,46 @@ public class ExampleJobService extends JobService {
         };
 
         locationManager = (LocationManager) getApplicationContext().getSystemService(Context.LOCATION_SERVICE);
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2000, 0, locationListener);
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, interval, 0, locationListener);
 
     }
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
-    private void createFile(){
+    private void createFile() {
         File file = new File(path);
 
-        if(!file.exists()){
+        if (!file.exists()) {
             try {
                 file.createNewFile();
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            Log.i("FILEPATH&&&&",path);
+            Log.i("FILEPATH&&&&", path);
         }
     }
 
-    private void writeData (String data, Context context){
+    private void createReadFile() {
+        File file = new File(readPath);
+
+        if (!file.exists()) {
+            try {
+                file.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            Log.i("READFILEPATH@@", readPath);
+        }
+    }
+
+    private void writeData(String data, Context context) {
         try {
             OutputStreamWriter outputStreamWriter = new OutputStreamWriter(new FileOutputStream(path));
             outputStreamWriter.append(data);
             outputStreamWriter.close();
 
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             Log.e("Exception", "File write failed: " + e.toString());
         }
     }
@@ -155,15 +176,15 @@ public class ExampleJobService extends JobService {
     private String readData(Context context) {
         String result = "";
         try {
-            InputStream inputStream = new FileInputStream(path);
+            InputStream inputStream = new FileInputStream(readPath);
 
-            if ( inputStream != null ) {
+            if (inputStream != null) {
                 InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
                 BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
                 String receiveString = "";
                 StringBuilder stringBuilder = new StringBuilder();
 
-                while ( (receiveString = bufferedReader.readLine()) != null ) {
+                while ((receiveString = bufferedReader.readLine()) != null) {
                     stringBuilder.append(receiveString);
                 }
 
@@ -171,8 +192,7 @@ public class ExampleJobService extends JobService {
                 inputStream.close();
                 result = stringBuilder.toString();
             }
-        }
-        catch (FileNotFoundException e) {
+        } catch (FileNotFoundException e) {
             Log.e("login activity", "File not found: " + e.toString());
         } catch (IOException e) {
             Log.e("login activity", "Can not read file: " + e.toString());
@@ -181,7 +201,6 @@ public class ExampleJobService extends JobService {
         return result;
     }
     ////////////////////////////////////////////////////////////////////////////////////////////////
-
 
 
 }
